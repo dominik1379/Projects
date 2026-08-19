@@ -1,7 +1,11 @@
 # Projects
 Projects coded in C, JavaScript, SQL
 
+----------------------------------------------------------------------------------------------
 
+JavaScript project is a Java-based implementation of the Bejeweled match-3 puzzle game, built following a full-stack, client-server architecture.Architecture & Key ComponentsCore Domain & ADTs (core): Implements game mechanics and Abstract Data Types (ADTs), including a 2D matrix field grid (Field), tiles and gems (Tile, Gem), move validation logic (Move), score tracking (ScoringSystem), and a multi-threaded timer (Timer).  Client-Server Architecture (server / SpringClient): Separates the presentation layer and client application from the backend service to handle network communication and persistent game state.REST Web Services (service): Exposes RESTful APIs for client-server interaction, enabling functionalities like fetching leaderboard ranks, submitting high scores, and managing user comments or ratings.Database & Domain Entities (entity): Contains data models (such as Score) mapping to a relational database on the server side for permanent data storage.  Technology Stack: Java (OOP), Spring Framework (REST services, client-server context), multithreading, and SQL database integration.
+
+----------------------------------------------------------------------------------------------
 
 SQL script defines a PostgreSQL relational database schema for an online accommodation booking system, complete with automated business logic and data validation mechanisms.
 
