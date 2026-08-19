@@ -1,0 +1,438 @@
+DROP TABLE IF EXISTS Rezervacia_Izba CASCADE;
+DROP TABLE IF EXISTS Platba CASCADE;
+DROP TABLE IF EXISTS Rezervacia CASCADE;
+DROP TABLE IF EXISTS Izba CASCADE;
+DROP TABLE IF EXISTS Recenzia CASCADE;
+DROP TABLE IF EXISTS Host CASCADE;
+DROP TABLE IF EXISTS Ubytovanie CASCADE;
+
+CREATE TABLE Ubytovanie (
+    ID_Ubytovanie SERIAL PRIMARY KEY,
+    Nazov VARCHAR(100) NOT NULL UNIQUE,
+    Adresa VARCHAR(100) NOT NULL UNIQUE,
+    Typ VARCHAR(100) NOT NULL,
+    Hodnotenie NUMERIC(3, 1) CHECK (Hodnotenie BETWEEN 0 AND 5)
+);
+
+CREATE TABLE Izba (
+    ID_Izba SERIAL PRIMARY KEY,
+    Cislo VARCHAR(20) NOT NULL UNIQUE,
+    Cena_noc NUMERIC(10, 2) NOT NULL,
+    Kapacita INT NOT NULL CHECK (Kapacita > 0),
+    ID_Ubytovanie INT NOT NULL,
+    FOREIGN KEY (ID_Ubytovanie) REFERENCES Ubytovanie(ID_Ubytovanie) ON DELETE CASCADE
+);
+
+CREATE TABLE Host (
+    ID_Host SERIAL PRIMARY KEY,
+    Meno VARCHAR(100) NOT NULL,
+    Priezvisko VARCHAR(100) NOT NULL,
+    Email VARCHAR(100) NOT NULL UNIQUE,
+    Tel_cislo VARCHAR(100) NOT NULL UNIQUE
+);
+
+CREATE TABLE Rezervacia (
+    ID_Rezervacia SERIAL PRIMARY KEY,
+    Datum_prichod DATE NOT NULL,
+    Datum_odchod DATE NOT NULL CHECK (Datum_odchod > Datum_prichod),
+    Pocet_hosti INT NOT NULL CHECK (Pocet_hosti > 0),
+    Cena NUMERIC(10, 2) NOT NULL CHECK (Cena >= 0),
+    ID_Host INT NOT NULL,
+    FOREIGN KEY (ID_Host) REFERENCES Host(ID_Host) ON DELETE CASCADE
+);
+
+CREATE TABLE Platba (
+    ID_Platba SERIAL PRIMARY KEY,
+    Sposob VARCHAR(100) NOT NULL,
+    Cislo_transakcie VARCHAR(100) NOT NULL UNIQUE,
+    Suma NUMERIC(10, 2) NOT NULL CHECK (Suma >= 0),
+    ID_Rezervacia INT NOT NULL UNIQUE,
+    FOREIGN KEY (ID_Rezervacia) REFERENCES Rezervacia(ID_Rezervacia) ON DELETE CASCADE
+);
+
+CREATE TABLE Recenzia (
+    ID_Recenzia SERIAL PRIMARY KEY,
+    Text VARCHAR(500) NOT NULL,
+    Datum DATE NOT NULL,
+    Hodnotenie NUMERIC(3,1) NOT NULL CHECK (Hodnotenie BETWEEN 0 AND 5),
+    ID_Host INT NOT NULL,
+    ID_Ubytovanie INT NOT NULL,
+    FOREIGN KEY (ID_Host) REFERENCES Host(ID_Host) ON DELETE CASCADE,
+    FOREIGN KEY (ID_Ubytovanie) REFERENCES Ubytovanie(ID_Ubytovanie) ON DELETE CASCADE
+);
+
+CREATE TABLE Rezervacia_Izba (
+    ID_Rezervacia INT NOT NULL,
+    ID_Izba INT NOT NULL,
+    PRIMARY KEY (ID_Rezervacia, ID_Izba),
+    FOREIGN KEY (ID_Rezervacia) REFERENCES Rezervacia(ID_Rezervacia) ON DELETE CASCADE,
+    FOREIGN KEY (ID_Izba) REFERENCES Izba(ID_Izba) ON DELETE CASCADE
+);
+
+INSERT INTO Ubytovanie (Nazov, Adresa, Typ, Hodnotenie) VALUES
+  ('Hotel Yasmin', 'Tyršovo Nábrežie 1, Košice', 'Hotel', 4.3),
+  ('Hotel Fontana', 'Námestie Andreja Hlinku 5, Žilina', 'Hotel', 3.3),
+  ('Apartmán Alexander', 'Mostná 68, Nitra', 'Apartmán', 4.2),
+  ('Villa Monica', 'Hlavná 9, Kráľovský Chlmec', 'Vila', 3.5),
+  ('ŠD Jedlíkova 5', 'Jedlíkova 5, Košice', 'Internát', 4);
+
+INSERT INTO Izba (Cislo, Cena_noc, Kapacita, ID_Ubytovanie) VALUES
+  ('315', 80.00, 3, 1),
+  ('202', 30.00, 2, 2),
+  ('401', 50.00, 2, 3),
+  ('101', 100.00, 5, 4),
+  ('606', 20.00, 4, 5);
+
+INSERT INTO Host (Meno, Priezvisko, Email, Tel_cislo) VALUES
+  ('Peter', 'Varga', 'peter.varga@gmail.com', '0949 555 464'),
+  ('Andrej', 'Kováč', 'andrej.kovac@gmail.com', '0940 519 478'),
+  ('Dávid', 'Tóth', 'david.toth@gmail.com', '0949 421 119'),
+  ('Martina', 'Nováková', 'martina.novakova@gmail.com', '0907 569 447'),
+  ('Sofia', 'Balážová', 'sofia.balazova@gmail.com', '0940 474 125');
+
+INSERT INTO Rezervacia (Datum_prichod, Datum_odchod, Pocet_hosti, Cena, ID_Host) VALUES
+  ('2025-04-11', '2025-04-17', 3, 480.00, 1),
+  ('2025-04-15', '2025-04-23', 2, 240.00, 2),
+  ('2025-07-17', '2025-07-22', 2, 250.00, 3),
+  ('2025-08-05', '2025-08-10', 5, 500.00, 4),
+  ('2025-09-01', '2025-09-02', 4, 20.00, 5);
+
+INSERT INTO Platba (Sposob, Cislo_transakcie, Suma, ID_Rezervacia) VALUES
+  ('PayPal', 'ABCD0001', 480.00, 1),
+  ('Bankový prevod', 'ABCD0002', 240.00, 2),
+  ('Karta', 'ABCD0003', 250.00, 3),
+  ('Hotovosť', 'ABCD0004', 500.00, 4),
+  ('Bankový prevod', 'ABCD0005', 20.00, 5);
+
+INSERT INTO Recenzia (Text, Datum, Hodnotenie, ID_Host, ID_Ubytovanie) VALUES
+  ('Čisté, všetko vybavené, super lokalita, nemam čo vytknúť', '2025-04-18', 5, 1, 1),
+  ('Nefunkčná klima, nikto nám nevedel pomôcť, nikdy viac', '2025-04-26', 0.5, 2, 2),
+  ('Izba v hroznom stave, personál nepríjemní, neodporúčam', '2025-07-22', 1.3, 3, 3),
+  ('Pomer cena/kvalita vôbec neodpovedá, čakal som niečo viac', '2025-08-13', 2.2, 4, 4),
+  ('Útulné, pomerne dobre vybavené, super cena', '2025-09-05', 4.1, 5, 5);
+
+INSERT INTO Rezervacia_Izba (ID_Rezervacia, ID_Izba) VALUES
+  (1, 1),
+  (2, 2),
+  (3, 3),
+  (4, 4),
+  (5, 5);
+
+-- 2 pohľady s jednoduchým netriviálnym SELECTom nad jednou tabuľkou
+
+CREATE VIEW UBYTOVANIE_VYSOKE_HODNOTENIE AS
+SELECT *
+FROM Ubytovanie
+WHERE Hodnotenie > 4;
+COMMENT ON VIEW UBYTOVANIE_VYSOKE_HODNOTENIE IS 'Nájdi všetky ubytovania s hodnotením vyšším ako 4';
+
+CREATE VIEW PLATBY_BANKOVY_PREVOD AS
+SELECT *
+FROM Platba
+WHERE Sposob = 'Bankový prevod';
+COMMENT ON VIEW PLATBY_BANKOVY_PREVOD IS 'Nájdi všetky platby vykonané cez bankový prevod';
+
+-- 3 pohľady so spájaním tabuliek
+
+CREATE VIEW REZERVACIE_HOSTI AS
+SELECT
+    r.ID_Rezervacia,
+    r.Datum_prichod,
+    r.Datum_odchod,
+    r.Pocet_hosti,
+    r.Cena,
+    h.Meno,
+    h.Priezvisko,
+    h.Email,
+    h.Tel_cislo
+FROM Rezervacia r
+JOIN Host h ON r.ID_Host = h.ID_Host;
+COMMENT ON VIEW REZERVACIE_HOSTI IS 'Nájdi rezervácie spolu s údajmi hostí';
+
+CREATE VIEW REZERVACIE_IZBY AS
+SELECT
+    r.ID_Rezervacia,
+    r.Datum_prichod,
+    r.Datum_odchod,
+    iz.Cislo AS Cislo_Izby,
+    iz.Cena_noc,
+    iz.Kapacita
+FROM Rezervacia r
+JOIN Rezervacia_Izba ri ON r.ID_Rezervacia = ri.ID_Rezervacia
+JOIN Izba iz ON ri.ID_Izba = iz.ID_Izba;
+COMMENT ON VIEW REZERVACIE_IZBY IS 'Nájdi rezervácie spolu s priradenými izbami';
+
+CREATE VIEW REZERVACIE_PLATBY AS
+SELECT
+    r.ID_Rezervacia,
+    r.Datum_prichod,
+    r.Datum_odchod,
+    r.Cena,
+    p.Sposob,
+    p.Cislo_transakcie,
+    p.Suma
+FROM Rezervacia r
+LEFT JOIN Platba p ON r.ID_Rezervacia = p.ID_Rezervacia;
+COMMENT ON VIEW REZERVACIE_PLATBY IS 'Nájdi rezervácie spolu s údajmi o platbách (vrátane rezervácií bez platby)';
+
+-- 2 pohľady s použitím agregačných funkcií a/alebo zoskupenia
+
+CREATE VIEW UBYTOVANIE_STATISTIKY AS
+SELECT Typ,
+       COUNT(*) AS Pocet_Ubytovaní,
+       AVG(Hodnotenie) AS Priemer_Hodnotenie
+FROM Ubytovanie
+GROUP BY Typ;
+COMMENT ON VIEW UBYTOVANIE_STATISTIKY IS 'Nájdi počet ubytovaní a priemerné hodnotenie pre jednotlivé typy ubytovania';
+
+CREATE VIEW MESACNA_REZERVACIA AS
+SELECT EXTRACT(MONTH FROM Datum_prichod) AS Mesiac,
+       COUNT(*) AS Pocet_Rezervacii,
+       SUM(Cena) AS Celkova_Cena
+FROM Rezervacia
+GROUP BY EXTRACT(MONTH FROM Datum_prichod);
+COMMENT ON VIEW MESACNA_REZERVACIA IS 'Nájdi mesačný prehľad rezervácií, pre každý mesiac príchodu zobraz počet rezervácií a celkovú cenu';
+
+-- 1 POHĽAD S POUŽITÍM MNOŽINOVÝCH OPERÁCIÍ
+
+CREATE VIEW HOSTIA_S_HOTELOM_A_RECENZIAMI AS
+SELECT h.ID_Host, h.Meno, h.Priezvisko, h.Email
+FROM Host h
+JOIN Rezervacia r ON h.ID_Host = r.ID_Host
+JOIN Rezervacia_Izba ri ON r.ID_Rezervacia = ri.ID_Rezervacia
+JOIN Izba i ON ri.ID_Izba = i.ID_Izba
+JOIN Ubytovanie u ON i.ID_Ubytovanie = u.ID_Ubytovanie
+WHERE u.Typ = 'Hotel'
+INTERSECT
+SELECT h.ID_Host, h.Meno, h.Priezvisko, h.Email
+FROM Host h
+JOIN Recenzia rec ON h.ID_Host = rec.ID_Host;
+
+COMMENT ON VIEW HOSTIA_S_HOTELOM_A_RECENZIAMI IS 'Nájdi hostí, ktorí si rezervovali hotel a aj zanechali akúkoľvek recenziu';
+
+--2 POHĽADY S POUŽITÍM VNORENÝCH PODDOPYTOV
+
+CREATE VIEW HOSTIA_S_NADPRIEMERNOU_CENOU AS
+SELECT h.ID_Host, h.Meno, h.Priezvisko, r.ID_Rezervacia, r.Cena
+FROM Host h
+JOIN Rezervacia r ON h.ID_Host = r.ID_Host
+WHERE r.Cena > (
+    SELECT AVG(Cena)
+    FROM Rezervacia
+);
+
+COMMENT ON VIEW HOSTIA_S_NADPRIEMERNOU_CENOU IS 'Nájdi hostí, ktorí majú aspoň jednu rezerváciu s cenou vyššou ako priemerná cena všetkých rezervácií';
+
+CREATE VIEW UBYTOVANIA_S_NAJLEPSIMI_RECENZIAMI AS
+SELECT u.ID_Ubytovanie, u.Nazov, u.Typ, u.Hodnotenie
+FROM Ubytovanie u
+WHERE u.ID_Ubytovanie IN (
+    SELECT r.ID_Ubytovanie
+    FROM Recenzia r
+    WHERE r.Hodnotenie > (
+        SELECT AVG(Hodnotenie) + 0.1
+        FROM Recenzia
+    )
+);
+
+COMMENT ON VIEW UBYTOVANIA_S_NAJLEPSIMI_RECENZIAMI IS 'Nájdi ubytovania, ktoré dostali aspoň jednu recenziu s hodnotením vyšším ako priemerné hodnotenie';
+
+-- SKRIPT NA VYTVORENIE TRIGGERU/TRIGGEROV, KTORÉ BUDÚ IMPLEMENTOVAŤ AUTOINKREMENTÁCIU UMELÝCH KĽÚČOV
+
+CREATE SEQUENCE IF NOT EXISTS ubytovanie_seq START WITH 1;
+CREATE SEQUENCE IF NOT EXISTS izba_seq START WITH 1;
+CREATE SEQUENCE IF NOT EXISTS host_seq START WITH 1;
+CREATE SEQUENCE IF NOT EXISTS rezervacia_seq START WITH 1;
+CREATE SEQUENCE IF NOT EXISTS platba_seq START WITH 1;
+CREATE SEQUENCE IF NOT EXISTS recenzia_seq START WITH 1;
+
+CREATE OR REPLACE FUNCTION auto_id_ubytovanie()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.ID_Ubytovanie IS NULL THEN
+        NEW.ID_Ubytovanie := nextval('ubytovanie_seq');
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION auto_id_izba()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.ID_Izba IS NULL THEN
+        NEW.ID_Izba := nextval('izba_seq');
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION auto_id_host()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.ID_Host IS NULL THEN
+        NEW.ID_Host := nextval('host_seq');
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION auto_id_rezervacia()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.ID_Rezervacia IS NULL THEN
+        NEW.ID_Rezervacia := nextval('rezervacia_seq');
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION auto_id_platba()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.ID_Platba IS NULL THEN
+        NEW.ID_Platba := nextval('platba_seq');
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION auto_id_recenzia()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.ID_Recenzia IS NULL THEN
+        NEW.ID_Recenzia := nextval('recenzia_seq');
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS tr_auto_id_ubytovanie ON Ubytovanie;
+CREATE TRIGGER tr_auto_id_ubytovanie
+BEFORE INSERT ON Ubytovanie
+FOR EACH ROW
+EXECUTE FUNCTION auto_id_ubytovanie();
+
+DROP TRIGGER IF EXISTS tr_auto_id_izba ON Izba;
+CREATE TRIGGER tr_auto_id_izba
+BEFORE INSERT ON Izba
+FOR EACH ROW
+EXECUTE FUNCTION auto_id_izba();
+
+DROP TRIGGER IF EXISTS tr_auto_id_host ON Host;
+CREATE TRIGGER tr_auto_id_host
+BEFORE INSERT ON Host
+FOR EACH ROW
+EXECUTE FUNCTION auto_id_host();
+
+DROP TRIGGER IF EXISTS tr_auto_id_rezervacia ON Rezervacia;
+CREATE TRIGGER tr_auto_id_rezervacia
+BEFORE INSERT ON Rezervacia
+FOR EACH ROW
+EXECUTE FUNCTION auto_id_rezervacia();
+
+DROP TRIGGER IF EXISTS tr_auto_id_platba ON Platba;
+CREATE TRIGGER tr_auto_id_platba
+BEFORE INSERT ON Platba
+FOR EACH ROW
+EXECUTE FUNCTION auto_id_platba();
+
+DROP TRIGGER IF EXISTS tr_auto_id_recenzia ON Recenzia;
+CREATE TRIGGER tr_auto_id_recenzia
+BEFORE INSERT ON Recenzia
+FOR EACH ROW
+EXECUTE FUNCTION auto_id_recenzia();
+
+-- SKRIPT NA ASPOŇ DVA ZMYSLUPLNÉ TRIGGRE  (OKREM TRIGGEROV NA AUTOINKREMENTÁCIU)
+
+-- Trigger, ktorý automaticky aktualizuje hodnotenie ubytovania po pridaní novej recenzie
+CREATE OR REPLACE FUNCTION update_ubytovanie_hodnotenie()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE Ubytovanie
+    SET Hodnotenie = (
+        SELECT AVG(Hodnotenie)
+        FROM Recenzia
+        WHERE ID_Ubytovanie = NEW.ID_Ubytovanie
+    )
+    WHERE ID_Ubytovanie = NEW.ID_Ubytovanie;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS tr_update_hodnotenie_ubytovanie ON Recenzia;
+CREATE TRIGGER tr_update_hodnotenie_ubytovanie
+AFTER INSERT ON Recenzia
+FOR EACH ROW
+EXECUTE FUNCTION update_ubytovanie_hodnotenie();
+
+-- Trigger, ktorý kontroluje, či hosť nemá už rezerváciu na rovnaký termín
+CREATE OR REPLACE FUNCTION check_uz_existujuca_rezervacia()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM Rezervacia r
+        WHERE r.ID_Host = NEW.ID_Host
+          AND r.Datum_odchod > NEW.Datum_prichod
+          AND r.Datum_prichod < NEW.Datum_odchod
+    ) THEN
+        RAISE EXCEPTION 'Hosť už má rezerváciu na tento termín.';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS tr_check_uz_existujuca_rezervacia ON Rezervacia;
+CREATE TRIGGER tr_check_uz_existujuca_rezervacia
+BEFORE INSERT ON Rezervacia
+FOR EACH ROW
+EXECUTE FUNCTION check_uz_existujuca_rezervacia();
+
+
+--SKRIPT NA ASPOŇ JEDNU STOROVANÚ PROCEDÚRU
+
+-- Procedúra, ktorá zobrazuje všetky rezervácie s cenou vyššou než 300
+CREATE OR REPLACE PROCEDURE ZOBRAZ_REZERVACIE_S_NADPRIEREMERNOU_CENOU()
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    rec RECORD;
+BEGIN
+    FOR rec IN
+        SELECT r.ID_Rezervacia, r.Datum_prichod, r.Datum_odchod, r.Cena, h.Meno, h.Priezvisko
+        FROM Rezervacia r
+        JOIN Host h ON r.ID_Host = h.ID_Host
+        WHERE r.Cena > 300
+    LOOP
+        RAISE NOTICE 'Rezervácia ID: %, Host: % % - Cena: %, Príchod: %, Odchod: %',
+            rec.ID_Rezervacia, rec.Meno, rec.Priezvisko, rec.Cena, rec.Datum_prichod, rec.Datum_odchod;
+    END LOOP;
+END;
+$$;
+CALL ZOBRAZ_REZERVACIE_S_NADPRIEREMERNOU_CENOU();
+
+--SKRIPT NA ASPOŇ JEDNU FUNKCIU
+
+-- Funkcia, ktorá počíta celkovú cenu za všetky rezervácie určitého hosťa
+CREATE OR REPLACE FUNCTION VYPOCITAJ_CELKOVU_CENU(p_ID_Host INT)
+RETURNS NUMERIC(10, 2) AS $$
+DECLARE
+    Celkova_Cena NUMERIC(10, 2) := 0;
+BEGIN
+    SELECT SUM(r.Cena)
+    INTO Celkova_Cena
+    FROM Rezervacia r
+    WHERE r.ID_Host = p_ID_Host;
+
+    RAISE NOTICE 'Celkova_Cena: %', Celkova_Cena;
+
+    IF Celkova_Cena IS NULL THEN
+        RETURN 0;
+    END IF;
+
+    RETURN Celkova_Cena;
+END;
+$$ LANGUAGE plpgsql;
+
+SELECT VYPOCITAJ_CELKOVU_CENU(1);
+
